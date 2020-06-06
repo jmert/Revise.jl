@@ -165,11 +165,25 @@ The other keyword arguments are more straightforward:
   This is primarily useful for debugging.
 """
 function methods_by_execution!(@nospecialize(recurse), methodinfo, docexprs, mod::Module, ex::Expr;
-                               mode::Symbol=:eval, disablebp::Bool=true, always_rethrow::Bool=false, kwargs...)
-    lwr = Meta.lower(mod, ex)
-    # @show ex
+                               mode::Symbol=:eval, disablebp::Bool=true, always_rethrow::Bool=false, recursed_toplevel::Bool=false, kwargs...)
+    lwr = JuliaInterpreter.lower(mod, ex)
     isa(lwr, Expr) || return nothing, nothing
     frame = prepare_thunk(mod, copy(lwr), true; eval=mode!==:sigs)
+    if frame === nothing && lwr.head === :toplevel
+        lnn, ret = nothing, nothing
+        for a in lwr.args
+            if isa(a, LineNumberNode)
+                lnn = a
+            elseif isa(a, Expr)
+                if isa(lnn, LineNumberNode) && !recursed_toplevel
+                    a = Expr(:toplevel, lnn, a)
+                end
+                ret, _ = methods_by_execution!(recurse, methodinfo, docexprs, mod, a; mode=mode, disablebp=disablebp, always_rethrow=always_rethrow, recursed_toplevel=true, kwargs...)
+                lnn = nothing
+            end
+        end
+        return ret, lwr
+    end
     frame === nothing && return nothing, nothing
     mode===:eval || LoweredCodeUtils.rename_framemethods!(recurse, frame)
     # Determine whether we need interpreted mode
