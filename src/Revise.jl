@@ -14,7 +14,7 @@ using OrderedCollections, CodeTracking, JuliaInterpreter, LoweredCodeUtils
 using CodeTracking: PkgFiles, basedir, srcfiles
 using JuliaInterpreter: whichtt, is_doc_expr, step_expr!, finish_and_return!, get_return
 using JuliaInterpreter: @lookup, moduleof, scopeof, pc_expr, prepare_thunk, split_expressions,
-                        linetable, codelocs, LineTypes, is_global_ref, is_quotenode
+                        linetable, codelocs, LineTypes, is_global_ref, is_quotenode, isassign
 using LoweredCodeUtils: next_or_nothing!, trackedheads, structheads, callee_matches
 
 export revise, includet, entr, MethodSummary
